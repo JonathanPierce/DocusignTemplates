@@ -18,6 +18,36 @@ module DocusignTemplates
       data.merge!(other_data)
     end
 
+    def selected?
+      data[:selected] == "true" ? true : false
+    end
+
+    def value
+      if is_checkbox?
+        selected?
+      elsif is_radio_group?
+        selected_radio = radios.find do |radio|
+          radio.selected?
+        end
+
+        selected_radio ? selected_radio.value : nil
+      else
+        data[:value]
+      end
+    end
+
+    def value=(new_value)
+      if is_checkbox?
+        data[:selected] = new_value.to_s
+      elsif is_radio_group?
+        radios.each do |radio|
+          radio.data[:selected] = (new_value == radio.value).to_s
+        end
+      else
+        data[:value] = new_value
+      end
+    end
+
     def disabled?
       disabled
     end
@@ -43,11 +73,11 @@ module DocusignTemplates
     end
 
     def font_color
-      data[:font_color]
+      data[:font_color].to_sym
     end
 
     def font_size
-      data[:font_size]
+      data[:font_size].gsub('size', '').to_i
     end
 
     def recipient_id
@@ -80,6 +110,10 @@ module DocusignTemplates
 
     def is_text?
       data[:tab_type] == FieldTypes::TEXT
+    end
+
+    def is_pdf_field?
+      is_radio_group? || is_checkbox? || is_text?
     end
 
     def radios

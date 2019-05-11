@@ -8,7 +8,6 @@ require "docusign_templates"
 
 # (If you use this, don't forget to add pry to your Gemfile!)
 require "pry"
-# Pry.start
 
 converter = DocusignTemplates::Converter.new("tmp/TABIAForm.json")
 template = converter.convert!("tmp", "ta_bia")
@@ -19,5 +18,4 @@ template.documents.each do |document|
   document.save_pdf!("./tmp/filled-#{document.data[:path]}", recipients)
 end
 
-require "irb"
-IRB.start(__FILE__)
+binding.pry
