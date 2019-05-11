@@ -67,6 +67,10 @@ module DocusignTemplates
       end
     end
 
+    def self.convert!(path, output_directory, template_name)
+      Converter.new(path).convert!(output_directory, template_name)
+    end
+
     def initialize(path)
       @path = path
       @template_json = read_template_json
@@ -98,13 +102,14 @@ module DocusignTemplates
     def output_documents(output_directory, template_name)
       template_json[:documents].map.with_index do |document, index|
         index_part = "_#{index}"
-        output_path = "#{output_directory}/#{template_name}#{index_part}.pdf"
+        file_name = "#{template_name}#{index_part}.pdf"
+        output_path = "#{output_directory}/#{file_name}"
 
         File.open(output_path, "wb") do |file|
           file.write Base64.decode64(document.delete(:document_base64))
         end
 
-        document.merge(path: output_path)
+        document.merge(path: file_name)
       end
     end
 

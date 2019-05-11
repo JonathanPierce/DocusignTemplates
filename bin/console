@@ -7,11 +7,17 @@ require "docusign_templates"
 # with your gem easier. You can also use a different console, if you like.
 
 # (If you use this, don't forget to add pry to your Gemfile!)
-# require "pry"
+require "pry"
 # Pry.start
 
 converter = DocusignTemplates::Converter.new("tmp/TABIAForm.json")
-converter.convert!("tmp", "ta_bia")
+template = converter.convert!("tmp", "ta_bia")
+
+recipients = template.recipients_for_roles(["advisor_embedded_approval", "client"])
+
+template.documents.each do |document|
+  document.save_pdf!("./tmp/filled-#{document.data[:path]}", recipients)
+end
 
 require "irb"
 IRB.start(__FILE__)
