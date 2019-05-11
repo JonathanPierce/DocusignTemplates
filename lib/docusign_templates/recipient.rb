@@ -12,6 +12,12 @@ module DocusignTemplates
       @data.merge!(other_data)
     end
 
+    def as_composite_template_entry
+      data.except(:pdf_fields).merge(
+        tabs: enabled_tabs_for_composite_entry
+      )
+    end
+
     def role_name
       data[:role_name]
     end
@@ -35,6 +41,19 @@ module DocusignTemplates
     end
 
     private
+
+    def enabled_tabs_for_composite_entry
+      result = {}
+
+      @tabs.each do |type, type_tabs|
+        enabled_tabs = type_tabs.reject(&:disabled?)
+
+        next if enabled_tabs.empty?
+        result[type] = enabled_tabs.map(&:as_composite_template_entry)
+      end
+
+      result
+    end
 
     def flatten_fields(fields)
       fields.values.flatten

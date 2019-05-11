@@ -11,10 +11,15 @@ module DocusignTemplates
       @documents = parse_documents
     end
 
+    def template_options
+      data[:template_options]
+    end
+
     def signers
       recipients[:signers]
     end
 
+    # returns an array of all recipients matching on the the roles, regardless of type
     def recipients_for_roles(roles)
       result = []
 
@@ -43,11 +48,31 @@ module DocusignTemplates
       end
     end
 
-    def to_composite_template(recipients, document_options = {})
-      # TODO
+    # NOTE: Recipients should be an object mapping <string,Recipient[]>, where the
+    # string is the recipient type (eg: "signers")
+    def as_composite_template_entry(recipients, sequence)
+      all_type_recipients = recipients.values.flatten
+
+      {
+        sequence: sequence.to_s,
+        recipients: recipients_for_composite_template_entry(recipients),
+        documents: documents.map do |document|
+          document.as_composite_template_entry(all_type_recipients)
+        end
+      }
     end
 
     private
+
+    def recipients_for_composite_template_entry(recipients)
+      result = {}
+
+      recipients.each do |type, type_recipients|
+        result[type] = type_recipients.map(&:as_composite_template_entry)
+      end
+
+      result
+    end
 
     def parse_recipients
       results = {}

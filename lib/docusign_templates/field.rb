@@ -14,6 +14,10 @@ module DocusignTemplates
       @disabled = false
     end
 
+    def as_composite_template_entry
+      data
+    end
+
     def merge!(other_data)
       data.merge!(other_data)
     end

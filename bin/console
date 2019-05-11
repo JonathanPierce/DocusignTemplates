@@ -14,6 +14,15 @@ template = converter.convert!("tmp", "ta_bia")
 
 recipients = template.recipients_for_roles(["advisor_embedded_approval", "client"])
 
+File.write(
+  "./tmp/composite.json",
+  JSON.dump(
+    DocusignTemplates::Converter.camelize(
+      template.as_composite_template_entry({ signers: recipients }, 1).deep_stringify_keys
+    )
+  )
+)
+
 template.documents.each do |document|
   document.save_pdf!("./tmp/filled-#{document.data[:path]}", recipients)
 end

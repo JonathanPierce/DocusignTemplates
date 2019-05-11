@@ -8,11 +8,17 @@ module DocusignTemplates
     end
 
     def merge!(other_data)
-      @data.merge!(other_data)
+      data.merge!(other_data)
+    end
+
+    def as_composite_template_entry(recipients)
+      data.except(:path).merge(
+        document_base64: Base64.encode64(to_pdf(recipients))
+      )
     end
 
     def path
-      "#{base_directory}/#{@data[:path]}"
+      "#{base_directory}/#{data[:path]}"
     end
 
     def document_id
