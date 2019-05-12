@@ -41,13 +41,13 @@ module DocusignTemplates
     end
 
     def value=(new_value)
-      if is_checkbox?
+      if is_checkbox? # boolean
         data[:selected] = new_value.to_s
-      elsif is_radio_group?
+      elsif is_radio_group? # value to select
         radios.each do |radio|
           radio.data[:selected] = (new_value == radio.value).to_s
         end
-      else
+      else # string value
         data[:value] = new_value
       end
     end
@@ -69,7 +69,11 @@ module DocusignTemplates
     end
 
     def width
-      data[:width].to_i
+      if data[:width] # some fields only list height
+        data[:width].to_i
+      else
+        height
+      end
     end
 
     def height
@@ -77,11 +81,19 @@ module DocusignTemplates
     end
 
     def font_color
-      data[:font_color].to_sym
+      if data[:font_color]
+        data[:font_color].to_sym
+      else
+        :black
+      end
     end
 
     def font_size
-      data[:font_size].gsub('size', '').to_i
+      if data[:font_size]
+        data[:font_size].gsub('size', '').to_i
+      else
+        10
+      end
     end
 
     def recipient_id

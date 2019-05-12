@@ -54,7 +54,11 @@ module DocusignTemplates
         end
       end
 
-      page.Contents << stream
+      if page.Contents.is_a?(Array)
+        page.Contents << stream
+      else
+        page.Contents = [page.Contents, stream]
+      end
     end
 
     def each_required_page_field(page_index)
@@ -109,7 +113,7 @@ module DocusignTemplates
 
         stream.draw_line(start, finish, {
           stroke: true,
-          line_width: 3,
+          line_width: line_width,
           line_cap: Origami::Graphics::LineCapStyle::ROUND_CAP,
           line_join: Origami::Graphics::LineJoinStyle::ROUND_JOIN,
           stroke_color: BOX_COLOR

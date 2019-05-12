@@ -136,11 +136,19 @@ module DocusignTemplates
     end
 
     def output_pdf_fields(recipient)
-      recipient[:tabs].slice(*FIELD_TYPES)
+      if recipient[:tabs]
+        recipient[:tabs].slice(*FIELD_TYPES)
+      else
+        {}
+      end
     end
 
     def output_tabs(recipient)
-      recipient[:tabs].slice(*TAB_TYPES)
+      if recipient[:tabs]
+        recipient[:tabs].slice(*TAB_TYPES)
+      else
+        {}
+      end
     end
   end
 end

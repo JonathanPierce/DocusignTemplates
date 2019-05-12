@@ -9,10 +9,11 @@ require "docusign_templates"
 # (If you use this, don't forget to add pry to your Gemfile!)
 require "pry"
 
-converter = DocusignTemplates::Converter.new("tmp/TABIAForm.json")
-template = converter.convert!("tmp", "ta_bia")
+# Example code
+converter = DocusignTemplates::Converter.new("tmp/RawDocusignTemplate.json")
+template = converter.convert!("tmp", "converted_template")
 
-recipients = template.recipients_for_roles(["advisor_embedded_approval", "client"])
+recipients = template.recipients_for_roles(["role_one", "role_two"])
 
 File.write(
   "./tmp/composite.json",

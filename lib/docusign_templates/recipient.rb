@@ -9,7 +9,7 @@ module DocusignTemplates
     end
 
     def merge!(other_data)
-      @data.merge!(other_data)
+      data.merge!(other_data)
     end
 
     def as_composite_template_entry
