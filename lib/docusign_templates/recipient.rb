@@ -1,6 +1,6 @@
 module DocusignTemplates
   class Recipient
-    attr_reader :data
+    attr_reader :data, :fields, :tabs
 
     def initialize(data)
       @data = data.deep_dup.except(:tabs, :pdf_fields)
@@ -23,7 +23,7 @@ module DocusignTemplates
     end
 
     def fields_for_document(document)
-      flatten_fields(@fields).select do |field|
+      flatten_fields(fields).select do |field|
         field.document_id == document.document_id
       end
     end
@@ -35,7 +35,7 @@ module DocusignTemplates
     end
 
     def tabs_for_document(document)
-      flatten_fields(@tabs).select do |tab|
+      flatten_fields(tabs).select do |tab|
         tab.document_id == document.document_id
       end
     end
@@ -45,7 +45,7 @@ module DocusignTemplates
     def enabled_tabs_for_composite_entry
       result = {}
 
-      @tabs.each do |type, type_tabs|
+      tabs.each do |type, type_tabs|
         enabled_tabs = type_tabs.reject(&:disabled?)
 
         next if enabled_tabs.empty?

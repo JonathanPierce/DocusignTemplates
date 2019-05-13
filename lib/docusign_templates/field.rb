@@ -44,14 +44,14 @@ module DocusignTemplates
         data[:selected] = new_value.to_s
       elsif is_radio_group? # value to select
         radios.each do |radio|
-          radio.data[:selected] = (new_value == radio.value).to_s
+          radio.data[:selected] = (new_value.to_s == radio.value).to_s
         end
-      elsif is_list?
+      elsif is_list? # value to select
         list_items.each do |list_item|
-          list_item.data[:selected] = (new_value == list_item.value).to_s
+          list_item.data[:selected] = (new_value.to_s == list_item.value).to_s
         end
       else # string value
-        data[:value] = new_value
+        data[:value] = new_value.to_s
       end
     end
 

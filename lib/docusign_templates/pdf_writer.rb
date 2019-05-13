@@ -89,7 +89,8 @@ module DocusignTemplates
     end
 
     def draw_checkbox(page, stream, field)
-      # return unless field.selected?
+      return unless field.selected?
+
       checkbox_size = 13
       top_left = corrected_box_coordinate(page, field.x, field.y, checkbox_size)
 
@@ -136,8 +137,10 @@ module DocusignTemplates
       half_radio_size = radio_size / 2
       top_left = corrected_box_coordinate(page, radio.x, radio.y, radio_size)
       midpoint = [top_left[:x] + half_radio_size, top_left[:y] + half_radio_size]
+      offset_midpoint = midpoint.map { |p| p + 0.1 }
 
-      stream.draw_line(midpoint, midpoint, {
+      # line has to have some distance to show in DocuSign signing view
+      stream.draw_line(midpoint, offset_midpoint, {
         stroke: true,
         line_width: half_radio_size * 1.5,
         line_cap: Origami::Graphics::LineCapStyle::ROUND_CAP,
@@ -147,10 +150,11 @@ module DocusignTemplates
     end
 
     def draw_text(page, stream, field)
+      return if field.value.nil?
       return if field.value.empty?
 
-      # PDF renders text from bottom-left, docusign from top-left
-      corrected_y = field.y - field.font_size
+      # docusign renders text from top-left, pdf renders from bottom-left
+      corrected_y = field.y - field.height + field.font_size
       options = corrected_box_coordinate(page, field.x, corrected_y, field.height).merge(
         size: field.font_size,
         color: get_font_color(field)

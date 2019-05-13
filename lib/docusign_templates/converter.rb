@@ -115,6 +115,7 @@ module DocusignTemplates
 
     def output_recipients
       recipients = {}
+      return recipients unless template_json[:recipients]
 
       template_json[:recipients].each do |type, type_recipients|
         next unless type_recipients.is_a?(Array)

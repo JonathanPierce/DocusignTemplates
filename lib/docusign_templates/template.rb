@@ -16,7 +16,7 @@ module DocusignTemplates
     end
 
     def signers
-      recipients[:signers]
+      recipients[:signers] || []
     end
 
     # returns an array of all recipients matching on the the roles, regardless of type
@@ -30,6 +30,16 @@ module DocusignTemplates
       end
 
       result
+    end
+
+    def recipient_for_role(role)
+      recipients.each do |type, type_recipients|
+        type_recipients.each do |recipient|
+          return recipient if recipient.role_name == role
+        end
+      end
+
+      nil
     end
 
     def for_each_recipient_tab(recipients)
