@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    docusign_templates (0.1.0)
+    docusign_templates (1.0.0)
       activesupport
       origami
 

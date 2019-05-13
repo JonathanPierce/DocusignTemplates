@@ -5,7 +5,9 @@ module DocusignTemplates
     FIELD_TYPES = [
       :checkbox_tabs,
       :radio_group_tabs,
-      :text_tabs
+      :text_tabs,
+      :list_tabs,
+      :ssn_tabs
     ]
 
     TAB_TYPES = [
@@ -22,13 +24,11 @@ module DocusignTemplates
       :full_name_tabs,
       :initial_here_tabs,
       :last_name_tabs,
-      :list_tabs,
       :notarize_tabs,
       :note_tabs,
       :number_tabs,
       :signer_attachment_tabs,
       :sign_here_tabs,
-      :ssn_tabs,
       :tab_groups,
       :title_tabs,
       :view_tabs,

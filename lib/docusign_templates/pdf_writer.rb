@@ -51,6 +51,8 @@ module DocusignTemplates
           draw_radio_group(page, stream, field)
         elsif field.is_text?
           draw_text(page, stream, field)
+        elsif field.is_list?
+          draw_list(page, stream, field)
         end
       end
 
@@ -87,9 +89,9 @@ module DocusignTemplates
     end
 
     def draw_checkbox(page, stream, field)
-      return unless field.selected?
-
-      top_left = corrected_box_coordinate(page, field.x, field.y, field.height)
+      # return unless field.selected?
+      checkbox_size = 13
+      top_left = corrected_box_coordinate(page, field.x, field.y, checkbox_size)
 
       offset = 2
       line_width = 2
@@ -97,9 +99,9 @@ module DocusignTemplates
 
       corners = [
         [offset + half_line_width, offset + half_line_width ],
-        [field.width - offset - half_line_width, offset + half_line_width],
-        [offset + half_line_width, field.height - offset - half_line_width],
-        [field.width - offset - half_line_width, field.height - offset - half_line_width]
+        [checkbox_size - offset - half_line_width, offset + half_line_width],
+        [offset + half_line_width, checkbox_size - offset - half_line_width],
+        [checkbox_size - offset - half_line_width, checkbox_size - offset - half_line_width]
       ].map do |coords|
         x, y = coords
         [top_left[:x] + x, top_left[:y] + y]
@@ -148,15 +150,25 @@ module DocusignTemplates
       return if field.value.empty?
 
       # PDF renders text from bottom-left, docusign from top-left
-      corrected_x = field.x + 2
-      corrected_y = field.y - (field.height / 4)
-
-      options = corrected_box_coordinate(page, corrected_x, corrected_y, field.height).merge(
+      corrected_y = field.y - field.font_size
+      options = corrected_box_coordinate(page, field.x, corrected_y, field.height).merge(
         size: field.font_size,
         color: get_font_color(field)
       )
 
       stream.write(field.value, options)
+    end
+
+    def draw_list(page, stream, field)
+      selected_item = field.selected_item
+      return unless selected_item
+
+      options = corrected_box_coordinate(page, field.x, field.y, field.height).merge(
+        size: field.font_size,
+        color: get_font_color(field)
+      )
+
+      stream.write(selected_item.name, options)
     end
 
     def get_font_color(field)
