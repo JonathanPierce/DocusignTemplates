@@ -6,14 +6,20 @@ module DocusignTemplates
       RADIO_GROUP = "radiogroup"
       SSN = "ssn"
       LIST = "list"
+      SIGNATURE = "signhere"
+      INITIAL = "initialhere"
     end
 
     attr_reader :data
     attr_accessor :disabled
 
-    def initialize(data)
+    def initialize(data, is_radio = false)
       @data = data.deep_dup
       @disabled = false
+      @is_radio = is_radio
+
+      # tab positions in downloaded templates are systematically off
+      correct_positions!
     end
 
     def as_composite_template_entry
@@ -22,6 +28,10 @@ module DocusignTemplates
 
     def merge!(other_data)
       data.merge!(other_data)
+    end
+
+    def is_radio?
+      @is_radio
     end
 
     def selected?
@@ -163,11 +173,15 @@ module DocusignTemplates
       is_radio_group? || is_checkbox? || is_text? || is_list?
     end
 
+    def is_signature?
+      data[:tab_type] == FieldTypes::SIGNATURE || data[:tab_type] == FieldTypes::INITIAL
+    end
+
     def radios
       return [] unless is_radio_group?
 
       @radios ||= data[:radios].map do |radio|
-        Field.new(radio)
+        Field.new(radio, true)
       end
     end
 
@@ -175,7 +189,38 @@ module DocusignTemplates
       return [] unless is_list?
 
       @list_items ||= data[:list_items].map do |list_item|
-        Field.new(list_item)
+        Field.new(list_item, true)
+      end
+    end
+
+    private
+
+    def correct_positions!
+      if data[:x_position]
+        old_x = x
+        data[:x_position] = (x + x_correction).to_s
+      end
+
+      if data[:y_position]
+        data[:y_position] = (y + y_correction).to_s
+      end
+    end
+
+    def x_correction
+      if is_pdf_field? || is_radio?
+        3
+      else
+        0
+      end
+    end
+
+    def y_correction
+      if is_pdf_field? || is_radio?
+        1
+      elsif is_signature?
+        -21
+      else
+        0
       end
     end
   end

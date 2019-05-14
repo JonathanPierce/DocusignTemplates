@@ -82,17 +82,11 @@ module DocusignTemplates
       { x: new_x, y: new_y }
     end
 
-    # all coordinates from templates are slightly off in the same way
-    def corrected_box_coordinate(page, x, y, height)
-      coordinate = to_page_coordinate(page, x, y, height)
-      { x: coordinate[:x] + 3, y: coordinate[:y] - 1}
-    end
-
     def draw_checkbox(page, stream, field)
       return unless field.selected?
 
       checkbox_size = 13
-      top_left = corrected_box_coordinate(page, field.x, field.y, checkbox_size)
+      top_left = to_page_coordinate(page, field.x, field.y, checkbox_size)
 
       offset = 2
       line_width = 2
@@ -135,7 +129,7 @@ module DocusignTemplates
 
       radio_size = 13
       half_radio_size = radio_size / 2
-      top_left = corrected_box_coordinate(page, radio.x, radio.y, radio_size)
+      top_left = to_page_coordinate(page, radio.x, radio.y, radio_size)
       midpoint = [top_left[:x] + half_radio_size, top_left[:y] + half_radio_size]
       offset_midpoint = midpoint.map { |p| p + 0.1 }
 
@@ -155,7 +149,7 @@ module DocusignTemplates
 
       # docusign renders text from top-left, pdf renders from bottom-left
       corrected_y = field.y - field.height + field.font_size
-      options = corrected_box_coordinate(page, field.x, corrected_y, field.height).merge(
+      options = to_page_coordinate(page, field.x, corrected_y, field.height).merge(
         size: field.font_size,
         color: get_font_color(field)
       )
@@ -167,7 +161,7 @@ module DocusignTemplates
       selected_item = field.selected_item
       return unless selected_item
 
-      options = corrected_box_coordinate(page, field.x, field.y, field.height).merge(
+      options = to_page_coordinate(page, field.x, field.y, field.height).merge(
         size: field.font_size,
         color: get_font_color(field)
       )
@@ -187,6 +181,7 @@ module DocusignTemplates
         decrypt: false
       }
 
+      pdf.delinearize! if pdf.linearized?
       pdf.send(:compile, options)
       pdf.send(:output, options)
     end
