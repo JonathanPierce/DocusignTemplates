@@ -72,9 +72,35 @@ module DocusignTemplates
       }
     end
 
+    # Generates the tempalte in new process, bypassing the GIL
+    # Allows for a speedup when run in a thread in CRuby
+    def async_as_composite_template_entry(recipients, sequence)
+      reader, writer = IO.pipe
+
+      pid = fork do
+        reader.close
+
+        writer.write(
+          JSON.dump(as_composite_template_entry(recipients, sequence))
+        )
+
+        writer.close
+        Kernel.exit!
+      end
+
+      writer.close
+      result = JSON.parse(reader.read)
+
+      Process.wait(pid)
+      reader.close
+      result
+    end
+
     private
 
     def recipients_for_composite_template_entry(recipients)
+      return nil if recipients.empty?
+
       result = {}
 
       recipients.each do |type, type_recipients|
