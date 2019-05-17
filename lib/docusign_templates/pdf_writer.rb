@@ -47,8 +47,8 @@ module DocusignTemplates
       each_required_page_field(page_index) do |field|
         if field.is_checkbox?
           draw_checkbox(page, stream, field)
-        elsif field.is_radio_group?
-          draw_radio_group(page, stream, field)
+        elsif field.is_radio?
+          draw_radio(page, stream, field)
         elsif field.is_text?
           draw_text(page, stream, field)
         elsif field.is_list?
@@ -65,8 +65,16 @@ module DocusignTemplates
 
     def each_required_page_field(page_index)
       recipients.each do |recipient|
-        recipient.fields_for_document_page(document, page_index).each do |field|
-          yield field unless field.disabled?
+        recipient.fields_for_document(document).each do |field|
+          next if field.disabled?
+
+          if field.is_radio_group?
+            field.radios.each do |radio|
+              yield radio if radio.page_index == page_index
+            end
+          else
+            yield field if field.page_index == page_index
+          end
         end
       end
     end
@@ -115,12 +123,6 @@ module DocusignTemplates
           line_join: Origami::Graphics::LineJoinStyle::ROUND_JOIN,
           stroke_color: BOX_COLOR
         })
-      end
-    end
-
-    def draw_radio_group(page, stream, field)
-      field.radios.each do |radio|
-        draw_radio(page, stream, radio)
       end
     end
 

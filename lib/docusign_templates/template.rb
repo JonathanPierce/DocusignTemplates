@@ -74,6 +74,7 @@ module DocusignTemplates
 
     # Generates the tempalte in new process, bypassing the GIL
     # Allows for a speedup when run in a thread in CRuby
+    # NOTE: No performance benefit unless ran in a multithreaded context
     def async_as_composite_template_entry(recipients, sequence)
       reader, writer = IO.pipe
 
@@ -89,7 +90,7 @@ module DocusignTemplates
       end
 
       writer.close
-      result = JSON.parse(reader.read)
+      result = JSON.parse(reader.read).deep_symbolize_keys
 
       Process.wait(pid)
       reader.close

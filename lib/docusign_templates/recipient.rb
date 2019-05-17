@@ -28,12 +28,6 @@ module DocusignTemplates
       end
     end
 
-    def fields_for_document_page(document, page_index)
-      fields_for_document(document).select do |field|
-        field.page_index == page_index
-      end
-    end
-
     def tabs_for_document(document)
       flatten_fields(tabs).select do |tab|
         tab.document_id == document.document_id
