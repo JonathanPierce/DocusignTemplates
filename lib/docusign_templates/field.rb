@@ -4,14 +4,22 @@ module DocusignTemplates
       TEXT = "text"
       CHECKBOX = "checkbox"
       RADIO_GROUP = "radiogroup"
+      SSN = "ssn"
+      LIST = "list"
+      SIGNATURE = "signhere"
+      INITIAL = "initialhere"
     end
 
     attr_reader :data
     attr_accessor :disabled
 
-    def initialize(data)
+    def initialize(data, is_radio = false)
       @data = data.deep_dup
       @disabled = false
+      @is_radio = is_radio
+
+      # tab positions in downloaded templates are systematically off
+      correct_positions!
     end
 
     def as_composite_template_entry
@@ -22,6 +30,10 @@ module DocusignTemplates
       data.merge!(other_data)
     end
 
+    def is_radio?
+      @is_radio
+    end
+
     def selected?
       data[:selected] == "true" ? true : false
     end
@@ -29,12 +41,9 @@ module DocusignTemplates
     def value
       if is_checkbox?
         selected?
-      elsif is_radio_group?
-        selected_radio = radios.find do |radio|
-          radio.selected?
-        end
-
-        selected_radio ? selected_radio.value : nil
+      elsif is_radio_group? || is_list?
+        item = selected_item
+        item ? item.value : nil
       else
         data[:value]
       end
@@ -45,10 +54,14 @@ module DocusignTemplates
         data[:selected] = new_value.to_s
       elsif is_radio_group? # value to select
         radios.each do |radio|
-          radio.data[:selected] = (new_value == radio.value).to_s
+          radio.data[:selected] = (new_value.to_s == radio.value).to_s
+        end
+      elsif is_list? # value to select
+        list_items.each do |list_item|
+          list_item.data[:selected] = (new_value.to_s == list_item.value).to_s
         end
       else # string value
-        data[:value] = new_value
+        data[:value] = new_value.to_s
       end
     end
 
@@ -58,6 +71,24 @@ module DocusignTemplates
 
     def label
       data[:group_name] || data[:tab_label]
+    end
+
+    def name
+      data[:name] || data[:text]
+    end
+
+    def selected_item
+      if is_radio_group?
+        radios.find do |radio|
+          radio.selected?
+        end
+      elsif is_list?
+        list_items.find do |list_item|
+          list_item.selected?
+        end
+      else
+        nil
+      end
     end
 
     def x
@@ -77,7 +108,13 @@ module DocusignTemplates
     end
 
     def height
-      data[:height].to_i
+      height = data[:height].to_i
+
+      if height == 0 || height.nil? # height is font_size if not otherwise specified
+        font_size
+      else
+        height
+      end
     end
 
     def font_color
@@ -125,18 +162,65 @@ module DocusignTemplates
     end
 
     def is_text?
-      data[:tab_type] == FieldTypes::TEXT
+      data[:tab_type] == FieldTypes::TEXT || data[:tab_type] == FieldTypes::SSN
+    end
+
+    def is_list?
+      data[:tab_type] == FieldTypes::LIST
     end
 
     def is_pdf_field?
-      is_radio_group? || is_checkbox? || is_text?
+      is_radio_group? || is_checkbox? || is_text? || is_list?
+    end
+
+    def is_signature?
+      data[:tab_type] == FieldTypes::SIGNATURE || data[:tab_type] == FieldTypes::INITIAL
     end
 
     def radios
       return [] unless is_radio_group?
 
       @radios ||= data[:radios].map do |radio|
-        Field.new(radio)
+        Field.new(radio, true)
+      end
+    end
+
+    def list_items
+      return [] unless is_list?
+
+      @list_items ||= data[:list_items].map do |list_item|
+        Field.new(list_item, true)
+      end
+    end
+
+    private
+
+    def correct_positions!
+      if data[:x_position]
+        old_x = x
+        data[:x_position] = (x + x_correction).to_s
+      end
+
+      if data[:y_position]
+        data[:y_position] = (y + y_correction).to_s
+      end
+    end
+
+    def x_correction
+      if is_pdf_field? || is_radio?
+        3
+      else
+        0
+      end
+    end
+
+    def y_correction
+      if is_pdf_field? || is_radio?
+        1
+      elsif is_signature?
+        -21
+      else
+        0
       end
     end
   end

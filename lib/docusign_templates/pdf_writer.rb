@@ -47,10 +47,12 @@ module DocusignTemplates
       each_required_page_field(page_index) do |field|
         if field.is_checkbox?
           draw_checkbox(page, stream, field)
-        elsif field.is_radio_group?
-          draw_radio_group(page, stream, field)
+        elsif field.is_radio?
+          draw_radio(page, stream, field)
         elsif field.is_text?
           draw_text(page, stream, field)
+        elsif field.is_list?
+          draw_list(page, stream, field)
         end
       end
 
@@ -63,8 +65,16 @@ module DocusignTemplates
 
     def each_required_page_field(page_index)
       recipients.each do |recipient|
-        recipient.fields_for_document_page(document, page_index).each do |field|
-          yield field unless field.disabled?
+        recipient.fields_for_document(document).each do |field|
+          next if field.disabled?
+
+          if field.is_radio_group?
+            field.radios.each do |radio|
+              yield radio if radio.page_index == page_index
+            end
+          else
+            yield field if field.page_index == page_index
+          end
         end
       end
     end
@@ -80,16 +90,11 @@ module DocusignTemplates
       { x: new_x, y: new_y }
     end
 
-    # all coordinates from templates are slightly off in the same way
-    def corrected_box_coordinate(page, x, y, height)
-      coordinate = to_page_coordinate(page, x, y, height)
-      { x: coordinate[:x] + 3, y: coordinate[:y] - 1}
-    end
-
     def draw_checkbox(page, stream, field)
       return unless field.selected?
 
-      top_left = corrected_box_coordinate(page, field.x, field.y, field.height)
+      checkbox_size = 13
+      top_left = to_page_coordinate(page, field.x, field.y, checkbox_size)
 
       offset = 2
       line_width = 2
@@ -97,9 +102,9 @@ module DocusignTemplates
 
       corners = [
         [offset + half_line_width, offset + half_line_width ],
-        [field.width - offset - half_line_width, offset + half_line_width],
-        [offset + half_line_width, field.height - offset - half_line_width],
-        [field.width - offset - half_line_width, field.height - offset - half_line_width]
+        [checkbox_size - offset - half_line_width, offset + half_line_width],
+        [offset + half_line_width, checkbox_size - offset - half_line_width],
+        [checkbox_size - offset - half_line_width, checkbox_size - offset - half_line_width]
       ].map do |coords|
         x, y = coords
         [top_left[:x] + x, top_left[:y] + y]
@@ -121,21 +126,17 @@ module DocusignTemplates
       end
     end
 
-    def draw_radio_group(page, stream, field)
-      field.radios.each do |radio|
-        draw_radio(page, stream, radio)
-      end
-    end
-
     def draw_radio(page, stream, radio)
       return unless radio.selected?
 
       radio_size = 13
       half_radio_size = radio_size / 2
-      top_left = corrected_box_coordinate(page, radio.x, radio.y, radio_size)
+      top_left = to_page_coordinate(page, radio.x, radio.y, radio_size)
       midpoint = [top_left[:x] + half_radio_size, top_left[:y] + half_radio_size]
+      offset_midpoint = midpoint.map { |p| p + 0.1 }
 
-      stream.draw_line(midpoint, midpoint, {
+      # line has to have some distance to show in DocuSign signing view
+      stream.draw_line(midpoint, offset_midpoint, {
         stroke: true,
         line_width: half_radio_size * 1.5,
         line_cap: Origami::Graphics::LineCapStyle::ROUND_CAP,
@@ -145,18 +146,29 @@ module DocusignTemplates
     end
 
     def draw_text(page, stream, field)
+      return if field.value.nil?
       return if field.value.empty?
 
-      # PDF renders text from bottom-left, docusign from top-left
-      corrected_x = field.x + 2
-      corrected_y = field.y - (field.height / 4)
-
-      options = corrected_box_coordinate(page, corrected_x, corrected_y, field.height).merge(
+      # docusign renders text from top-left, pdf renders from bottom-left
+      corrected_y = field.y - field.height + field.font_size
+      options = to_page_coordinate(page, field.x, corrected_y, field.height).merge(
         size: field.font_size,
         color: get_font_color(field)
       )
 
       stream.write(field.value, options)
+    end
+
+    def draw_list(page, stream, field)
+      selected_item = field.selected_item
+      return unless selected_item
+
+      options = to_page_coordinate(page, field.x, field.y, field.height).merge(
+        size: field.font_size,
+        color: get_font_color(field)
+      )
+
+      stream.write(selected_item.name, options)
     end
 
     def get_font_color(field)
@@ -171,6 +183,7 @@ module DocusignTemplates
         decrypt: false
       }
 
+      pdf.delinearize! if pdf.linearized?
       pdf.send(:compile, options)
       pdf.send(:output, options)
     end

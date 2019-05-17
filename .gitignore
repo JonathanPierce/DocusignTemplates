@@ -6,6 +6,10 @@
 /pkg/
 /spec/reports/
 /tmp/
+bin/test
 
 # rspec failure tracking
 .rspec_status
+
+# macOS cruft
+.DS_Store

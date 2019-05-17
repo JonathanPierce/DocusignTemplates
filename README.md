@@ -10,7 +10,7 @@ DocuSign's API performance degrades *rapidly* with the number of tabs in the env
 
  This library solves both issues by:
 
-- If all text, checkbox, and radio group fields are static, the library allows mapping the data locally and printing it directly onto the PDF. This static PDF can then be uploaded to DocuSign in the composite templates call
+- If all text, checkbox, list, ssn, and radio group fields are static, the library allows mapping the data locally and printing it directly onto the PDF. This static PDF can then be uploaded to DocuSign in the composite templates call
 - All other tabs can be marked as disabled. If disabled, the tab won't be included on the composite call.
 
 In other words, it replaces `serverTemplates` in the composite call with `inlineTemplates` that have data printed to the PDF, and only a smaller set of required tabs included. Since all text, checkbox, and radio group tabs have been eliminated, the API sees a massive performance gain. Nifty!

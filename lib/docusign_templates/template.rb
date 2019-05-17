@@ -16,7 +16,7 @@ module DocusignTemplates
     end
 
     def signers
-      recipients[:signers]
+      recipients[:signers] || []
     end
 
     # returns an array of all recipients matching on the the roles, regardless of type
@@ -30,6 +30,16 @@ module DocusignTemplates
       end
 
       result
+    end
+
+    def recipient_for_role(role)
+      recipients.each do |type, type_recipients|
+        type_recipients.each do |recipient|
+          return recipient if recipient.role_name == role
+        end
+      end
+
+      nil
     end
 
     def for_each_recipient_tab(recipients)
@@ -62,9 +72,36 @@ module DocusignTemplates
       }
     end
 
+    # Generates the tempalte in new process, bypassing the GIL
+    # Allows for a speedup when run in a thread in CRuby
+    # NOTE: No performance benefit unless ran in a multithreaded context
+    def async_as_composite_template_entry(recipients, sequence)
+      reader, writer = IO.pipe
+
+      pid = fork do
+        reader.close
+
+        writer.write(
+          JSON.dump(as_composite_template_entry(recipients, sequence))
+        )
+
+        writer.close
+        Kernel.exit!
+      end
+
+      writer.close
+      result = JSON.parse(reader.read).deep_symbolize_keys
+
+      Process.wait(pid)
+      reader.close
+      result
+    end
+
     private
 
     def recipients_for_composite_template_entry(recipients)
+      return nil if recipients.empty?
+
       result = {}
 
       recipients.each do |type, type_recipients|
