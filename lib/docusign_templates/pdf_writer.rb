@@ -85,8 +85,8 @@ module DocusignTemplates
 
     def to_page_coordinate(page, x, y, height)
       page_height = page.MediaBox.value[3] - page.MediaBox.value[1]
-      new_x = x + page.MediaBox[0]
-      new_y = page_height - y + page.MediaBox[1] - height
+      new_x = x + page.MediaBox.value[0]
+      new_y = page_height - y + page.MediaBox.value[1] - height
       { x: new_x, y: new_y }
     end
 
