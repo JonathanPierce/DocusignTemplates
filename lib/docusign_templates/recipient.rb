@@ -3,7 +3,7 @@ module DocusignTemplates
     attr_reader :data, :fields, :tabs
 
     def initialize(data)
-      @data = data.deep_dup.except(:tabs, :pdf_fields)
+      @data = data.except(:tabs, :pdf_fields).deep_dup
       @fields = parse_fields_or_tabs(data[:pdf_fields])
       @tabs = parse_fields_or_tabs(data[:tabs])
     end
@@ -13,7 +13,7 @@ module DocusignTemplates
     end
 
     def as_composite_template_entry
-      data.except(:pdf_fields).merge(
+      data.merge(
         tabs: enabled_tabs_for_composite_entry
       )
     end
